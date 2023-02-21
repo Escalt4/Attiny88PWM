@@ -1,4 +1,6 @@
-#pragma once
+#ifndef Attiny88PWM_h
+#define Attiny88PWM_h
+#include <Arduino.h>
 
 /*
 ____________________________________________________________________________________________________________________________
@@ -22,10 +24,8 @@ public:
     void setDuty();
 
 private:
-    bool _correct; // Correct PWM или Fast PWM
+    bool _correct;
     byte _resolution;
-    uint32_t _frequency;
-    uint16_t _duty;
 };
 
 Attiny88PWM::Attiny88PWM(bool correct = 0)
@@ -78,12 +78,12 @@ void Attiny88PWM::setResolution(byte resolution)
 // частота должна быть выше 244 Гц
 void Attiny88PWM::setFrequency(uint32_t frequency)
 {
-    _frequency = constrain(frequency, 245, 1000000);
+    frequency = constrain(frequency, 245, 1000000);
 
     // соотносим с частотой разрядность
     for (byte i = 8; i < 16; i++)
     {
-        if ((1 << i) >= 1)
+        if ((1 << i) / frequency >= 1)
         {
             _resolution = i;
             break;
@@ -96,8 +96,6 @@ void Attiny88PWM::setFrequency(uint32_t frequency)
 
 void setDuty(byte pin, uint16_t duty)
 {
-    _duty = duty;
-
     switch (pin)
     {
     case 9:
@@ -112,7 +110,7 @@ void setDuty(byte pin, uint16_t duty)
             DDRB |= (1 << PB1);
 
             // задаем скважность(заполнение)
-            OCR1A = map(duty, 0, (1 << resolution) - 1, 0, ICR1);
+            OCR1A = map(duty, 0, (1 << _resolution) - 1, 0, ICR1);
         }
         break;
 
@@ -126,7 +124,7 @@ void setDuty(byte pin, uint16_t duty)
             DDRB |= (1 << PB2);
 
             // задаем скважность(заполнение)
-            OCR1B = map(duty, 0, (1 << resolution) - 1, 0, ICR1);
+            OCR1B = map(duty, 0, (1 << _resolution) - 1, 0, ICR1);
         }
         break;
 
@@ -134,3 +132,5 @@ void setDuty(byte pin, uint16_t duty)
         break;
     }
 }
+
+#endif
