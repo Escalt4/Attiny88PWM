@@ -1,29 +1,13 @@
 #pragma once
 
-class Attiny88PWM
-{
-public:
-    Attiny88PWM();
-    void setMode(bool correct);
-    void setPrescaling(int prescaling);
-    void setResolution(byte resolution);
-    void setFrequency(float frequency);
-    void setDuty(byte pin, uint16_t duty);
-    void setDutyPercent(byte pin, float duty);
-    void setDuty8bit(byte pin, uint16_t duty);
-    void setDuty10bit(byte pin, uint16_t duty);
+bool _correct = false;
+byte _modeDivider = 1;
+int _prescaling = 1;
+int _prescalingList[] = {1, 8, 64, 256, 1024};
+byte _resolution = 8;
+float _frequency = 0.0;
 
-private:
-    void finalSetDuty(byte pin, uint16_t duty);
-    bool _correct = false;
-    byte _modeDivider = 1;
-    int _prescaling = 1;
-    int _prescalingList[] = {1, 8, 64, 256, 1024};
-    byte _resolution = 8;
-    float _frequency = 0.0;
-};
-
-Attiny88PWM::Attiny88PWM()
+void init_Attiny88PWM()
 {
     // сбрасываем настройки таймера
     TCCR1B = 0;
@@ -47,7 +31,7 @@ Attiny88PWM::Attiny88PWM()
     ICR1 = 255;
 }
 
-void setMode(bool correct)
+void setMode_Attiny88PWM(bool correct)
 {
     _correct = correct;
 
@@ -66,11 +50,10 @@ void setMode(bool correct)
         // устанавливаем 14й режим работы таймера (по даташиту, Fast PWM, сброс по ICR1)
         TCCR1A |= (1 << WGM11);
         TCCR1B |= (1 << WGM12) | (1 << WGM13);
-        break;
     }
 }
 
-void setPrescaling(int prescaling)
+void setPrescaling_Attiny88PWM(int prescaling)
 {
     // устанавливаем предделитель
     switch (prescaling)
@@ -105,7 +88,7 @@ void setPrescaling(int prescaling)
     }
 }
 
-void setResolution(byte resolution)
+void setResolution_Attiny88PWM(byte resolution)
 {
     _resolution = constrain(resolution, 1, 16);
 
@@ -113,7 +96,7 @@ void setResolution(byte resolution)
     ICR1 = (1ul << _resolution) - 1;
 }
 
-void setFrequency(float frequency)
+void setFrequency_Attiny88PWM(float frequency)
 {
     _frequency = constrain(frequency, 0, 8000000);
 
@@ -138,7 +121,7 @@ void setFrequency(float frequency)
     }
 }
 
-void finalSetDuty(byte pin, uint16_t duty)
+void setDutyRaw_Attiny88PWM(byte pin, uint16_t duty)
 {
     switch (pin)
     {
@@ -179,22 +162,22 @@ void finalSetDuty(byte pin, uint16_t duty)
     }
 }
 
-void setDuty(byte pin, uint16_t duty)
+void setDuty_Attiny88PWM(byte pin, uint16_t duty)
 {
-    finalSetDuty(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
+    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
 }
 
-void setDutyPercent(byte pin, float duty)
+void setDutyPercent_Attiny88PWM(byte pin, float duty)
 {
-    finalSetDuty(pin, map(constrain(duty, 0, 100), 0, 100, 0, ICR1));
+    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, 100), 0, 100, 0, ICR1));
 }
 
-void setDuty8bit(byte pin, uint16_t duty)
+void setDuty8bit_Attiny88PWM(byte pin, uint16_t duty)
 {
-    finalSetDuty(pin, map(constrain(duty, 0, 255), 0, 255, 0, ICR1));
+    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, 255), 0, 255, 0, ICR1));
 }
 
-void setDuty10bit(byte pin, uint16_t duty)
+void setDuty10bit_Attiny88PWM(byte pin, uint16_t duty)
 {
-    finalSetDuty(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
+    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
 }
