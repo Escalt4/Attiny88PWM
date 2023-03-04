@@ -7,15 +7,18 @@ public:
     void setMode(bool correct);
     void setPrescaling(int prescaling);
     void setResolution(byte resolution);
+    void setFrequency(uint32_t frequency);
     void setDuty(byte pin, uint16_t duty);
     void setDutyPercent(byte pin, float duty);
     void setDuty8bit(byte pin, uint16_t duty);
     void setDuty10bit(byte pin, uint16_t duty);
-    void setDutyLead(byte pin, uint16_t duty);
 
 private:
+    void finalSetDuty(byte pin, uint16_t duty);
     bool _correct = false;
+    int _prescaling = 1;
     byte _resolution = 8;
+    uint32_t _frequency;
 };
 
 Attiny88PWM::Attiny88PWM()
@@ -24,7 +27,8 @@ Attiny88PWM::Attiny88PWM()
     TCCR1B = 0;
     TCCR1A = 0;
 
-    //
+    // при переполнении счетчика таймера на выводах OC1A и OC1B устанавливается 1
+    // при совпадении счетчика таймера с OCR1A и OCR1B на выводах OC1A и OC1B будет установлен 0
     TCCR1A |= (1 << COM1A1) | (1 << COM1B1);
 
     // выбираем делитель частоты 1
@@ -65,22 +69,27 @@ void setPrescaling(int prescaling)
     switch (prescaling)
     {
     case 1:
+        _prescaling = 1;
         TCCR1B |= (1 << CS10);
         break;
 
     case 8:
+        _prescaling = 8;
         TCCR1B |= (1 << CS11);
         break;
 
     case 64:
+        _prescaling = 64;
         TCCR1B |= (1 << CS10) | (1 << CS11);
         break;
 
     case 256:
+        _prescaling = 256;
         TCCR1B |= (1 << CS12);
         break;
 
     case 1024:
+        _prescaling = 1024;
         TCCR1B |= (1 << CS10) | (1 << CS12);
         break;
 
@@ -97,7 +106,12 @@ void setResolution(byte resolution)
     ICR1 = (1ul << _resolution) - 1;
 }
 
-void setDuty(byte pin, uint16_t duty)
+void setFrequency(uint32_t frequency)
+{
+    
+}
+
+void finalSetDuty(byte pin, uint16_t duty)
 {
     switch (pin)
     {
@@ -140,20 +154,20 @@ void setDuty(byte pin, uint16_t duty)
 
 void setDutyPercent(byte pin, float duty)
 {
-    setDuty(pin, map(constrain(duty, 0, 100), 0, 100, 0, ICR1));
+    finalSetDuty(pin, map(constrain(duty, 0, 100), 0, 100, 0, ICR1));
 }
 
 void setDuty8bit(byte pin, uint16_t duty)
 {
-    setDuty(pin, map(constrain(duty, 0, 255), 0, 255, 0, ICR1));
+    finalSetDuty(pin, map(constrain(duty, 0, 255), 0, 255, 0, ICR1));
 }
 
 void setDuty10bit(byte pin, uint16_t duty)
 {
-    setDuty(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
+    finalSetDuty(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
 }
 
-void setDutyLead(byte pin, uint16_t duty)
+void setDuty(byte pin, uint16_t duty)
 {
-    setDuty(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
+    finalSetDuty(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
 }
