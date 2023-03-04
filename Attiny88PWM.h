@@ -7,7 +7,7 @@ public:
     void setMode(bool correct);
     void setPrescaling(int prescaling);
     void setResolution(byte resolution);
-    void setFrequency(uint32_t frequency);
+    void setFrequency(float frequency);
     void setDuty(byte pin, uint16_t duty);
     void setDutyPercent(byte pin, float duty);
     void setDuty8bit(byte pin, uint16_t duty);
@@ -16,9 +16,11 @@ public:
 private:
     void finalSetDuty(byte pin, uint16_t duty);
     bool _correct = false;
+    byte _modeDivider = 1;
     int _prescaling = 1;
+    int _prescalingList[] = {1, 8, 64, 256, 1024};
     byte _resolution = 8;
-    uint32_t _frequency;
+    float _frequency = 0.0;
 };
 
 Attiny88PWM::Attiny88PWM()
@@ -42,7 +44,7 @@ Attiny88PWM::Attiny88PWM()
     TCNT1 = 0;
 
     // установка верхнего предела счетчика таймера исходя из выбраного разрешения ШИМ
-    ICR1 = (1 << _resolution) - 1;
+    ICR1 = 255;
 }
 
 void setMode(bool correct)
@@ -51,12 +53,17 @@ void setMode(bool correct)
 
     if (correct)
     {
+        _modeDivider = 2;
+
         // устанавливаем 10й режим работы таймера (по даташиту, PWM Phase Correct, сброс по ICR1)
         TCCR1A |= (1 << WGM11);
         TCCR1B |= (1 << WGM13);
     }
     else
-    { // устанавливаем 14й режим работы таймера (по даташиту, Fast PWM, сброс по ICR1)
+    {
+        _modeDivider = 1;
+
+        // устанавливаем 14й режим работы таймера (по даташиту, Fast PWM, сброс по ICR1)
         TCCR1A |= (1 << WGM11);
         TCCR1B |= (1 << WGM12) | (1 << WGM13);
         break;
@@ -106,9 +113,29 @@ void setResolution(byte resolution)
     ICR1 = (1ul << _resolution) - 1;
 }
 
-void setFrequency(uint32_t frequency)
+void setFrequency(float frequency)
 {
-    
+    _frequency = constrain(frequency, 0, 8000000);
+
+    uint32_t top;
+
+    // ищем верхний предел для счетчика таймера
+    // перебираем варианты предделителей чтобы выбрать наименьший
+    for (byte i = 0; i < 5; i++)
+    {
+        top = F_CPU / _prescalingList[i] / (_frequency * _modeDivider);
+        if (top <= 65535)
+        {
+            ICR1 = top;
+            break;
+        }
+    }
+
+    // определяем разрешение верхнего предела для счетчика таймера
+    for (_resolution = 0; top > 0; top >>= 1)
+    {
+        _resolution++;
+    }
 }
 
 void finalSetDuty(byte pin, uint16_t duty)
@@ -116,40 +143,45 @@ void finalSetDuty(byte pin, uint16_t duty)
     switch (pin)
     {
     case 9:
-        switch (duty)
+        if (duty)
         {
-        case 0:
-            // отключаем пин если скважность(заполнение) = 0
-            DDRB &= ~(1 << PB1);
-            break;
-
-        default:
             // включаем пин
             DDRB |= (1 << PB1);
 
             // задаем скважность(заполнение)
             OCR1A = duty;
-            break;
+        }
+        else
+        {
+            // отключаем пин если скважность(заполнение) = 0
+            DDRB &= ~(1 << PB1);
         }
         break;
 
     case 10:
-        switch (duty)
+        if (duty)
         {
-        case 0:
-            DDRB &= ~(1 << PB2);
-            break;
-
-        default:
+            // включаем пин
             DDRB |= (1 << PB2);
+
+            // задаем скважность(заполнение)
             OCR1B = duty;
-            break;
+        }
+        else
+        {
+            // отключаем пин если скважность(заполнение) = 0
+            DDRB &= ~(1 << PB2);
         }
         break;
 
     default:
         break;
     }
+}
+
+void setDuty(byte pin, uint16_t duty)
+{
+    finalSetDuty(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
 }
 
 void setDutyPercent(byte pin, float duty)
@@ -165,9 +197,4 @@ void setDuty8bit(byte pin, uint16_t duty)
 void setDuty10bit(byte pin, uint16_t duty)
 {
     finalSetDuty(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
-}
-
-void setDuty(byte pin, uint16_t duty)
-{
-    finalSetDuty(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
 }
