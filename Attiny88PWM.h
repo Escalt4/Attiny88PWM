@@ -1,43 +1,103 @@
 #pragma once
 
-bool _correct = false;
-byte _modeDivider = 1;
-int _prescaling = 1;
-int _prescalingList[] = {1, 8, 64, 256, 1024};
-byte _resolution = 8;
-float _frequency = 0.0;
-
-void init_Attiny88PWM()
+namespace Attiny88PWM
 {
-    // сбрасываем настройки таймера
-    TCCR1B = 0;
+    void Attiny88PWM::resetTimer();
+    void Attiny88PWM::restoreTimer();
+    void Attiny88PWM::pinDetach(uint8_t pin);
+    void Attiny88PWM::pinAttach(uint8_t pin);
+    void Attiny88PWM::setPinModeOutput(uint8_t pin);
+    void Attiny88PWM::setMode(bool correct);
+    void Attiny88PWM::setPrescaling(int prescaling);
+    void Attiny88PWM::setResolution(byte resolution);
+    void Attiny88PWM::setFrequency(float frequency);
+    void Attiny88PWM::setDutyRaw(byte pin, uint16_t duty);
+    void Attiny88PWM::setDuty(byte pin, uint16_t duty);
+    void Attiny88PWM::setDutyPercent(byte pin, float duty);
+    void Attiny88PWM::setDuty8bit(byte pin, uint16_t duty);
+    void Attiny88PWM::setDuty10bit(byte pin, uint16_t duty);
+    void Attiny88PWM::initDefault();
+
+    byte _modeDivider = 1;                         // дополнительный делитель итоговой частоты ШИМ
+    int _prescaling = 1;                           // предделитель частоты таймера
+    int _prescalingList[] = {1, 8, 64, 256, 1024}; // список предделителей
+    byte _resolution = 8;                          // выбраное разрешение
+    float _frequency = 0.0;                        // выбраная частота
+    byte tccr1a;                                   // прошлые настройки таймера
+    byte tccr1b;                                   // прошлые настройки таймера
+
+};
+
+// Бекап и сброс настроек таймера
+void Attiny88PWM::resetTimer()
+{
+    Attiny88PWM::tccr1a = TCCR1A;
     TCCR1A = 0;
-
-    // при переполнении счетчика таймера на выводах OC1A и OC1B устанавливается 1
-    // при совпадении счетчика таймера с OCR1A и OCR1B на выводах OC1A и OC1B будет установлен 0
-    TCCR1A |= (1 << COM1A1) | (1 << COM1B1);
-
-    // выбираем делитель частоты 1
-    TCCR1B |= (1 << CS10);
-
-    // устанавливаем 14й режим работы таймера (по даташиту, Fast PWM, сброс по ICR1)
-    TCCR1A |= (1 << WGM11);
-    TCCR1B |= (1 << WGM12) | (1 << WGM13);
-
-    // установка нижнего предела счетчика таймера
-    TCNT1 = 0;
-
-    // установка верхнего предела счетчика таймера исходя из выбраного разрешения ШИМ
-    ICR1 = 255;
+    Attiny88PWM::tccr1b = TCCR1B;
+    TCCR1B = 0;
 }
 
-void setMode_Attiny88PWM(bool correct)
+// Восстановление настроек таймера
+void Attiny88PWM::restoreTimer()
 {
-    _correct = correct;
+    TCCR1A = tccr1a;
+    TCCR1B = tccr1b;
+}
 
+// Отключение пина от таймера
+void Attiny88PWM::pinDetach(uint8_t pin)
+{
+    switch (pin)
+    {
+    case 9:
+        TCCR1A &= ~(1 << COM1A1);
+        break;
+
+    case 10:
+        TCCR1A &= ~(1 << COM1B1);
+        break;
+    }
+}
+
+// Подключение пина к таймеру
+void Attiny88PWM::pinAttach(uint8_t pin)
+{
+    switch (pin)
+    {
+    case 9:
+        TCCR1A |= (1 << COM1A1);
+        break;
+
+    case 10:
+        TCCR1A |= (1 << COM1B1);
+        break;
+    }
+}
+
+// Установка пина как выход
+void Attiny88PWM::setPinModeOutput(uint8_t pin)
+{
+    switch (pin)
+    {
+    case 9:
+        DDRB |= (1 << PB1);
+        PORTB &= ~(1 << PB1);
+        break;
+
+    case 10:
+        DDRB |= (1 << PB2);
+        PORTB &= ~(1 << PB2);
+        break;
+    }
+}
+
+// Установка режима генерации ШИМ (Fast PWM или Correct PWM)
+void Attiny88PWM::setMode(bool correct)
+{
     if (correct)
     {
-        _modeDivider = 2;
+        // Задаем дополнительный делитель итоговой частоты ШИМ
+        Attiny88PWM::_modeDivider = 2;
 
         // устанавливаем 10й режим работы таймера (по даташиту, PWM Phase Correct, сброс по ICR1)
         TCCR1A |= (1 << WGM11);
@@ -45,7 +105,8 @@ void setMode_Attiny88PWM(bool correct)
     }
     else
     {
-        _modeDivider = 1;
+        // Задаем дополнительный делитель итоговой частоты ШИМ
+        Attiny88PWM::_modeDivider = 1;
 
         // устанавливаем 14й режим работы таймера (по даташиту, Fast PWM, сброс по ICR1)
         TCCR1A |= (1 << WGM11);
@@ -53,131 +114,127 @@ void setMode_Attiny88PWM(bool correct)
     }
 }
 
-void setPrescaling_Attiny88PWM(int prescaling)
+// Установка предделителя частоты таймера
+void Attiny88PWM::setPrescaling(int prescaling)
 {
-    // устанавливаем предделитель
     switch (prescaling)
     {
     case 1:
-        _prescaling = 1;
+        Attiny88PWM::_prescaling = 1;
         TCCR1B |= (1 << CS10);
         break;
 
     case 8:
-        _prescaling = 8;
+        Attiny88PWM::_prescaling = 8;
         TCCR1B |= (1 << CS11);
         break;
 
     case 64:
-        _prescaling = 64;
+        Attiny88PWM::_prescaling = 64;
         TCCR1B |= (1 << CS10) | (1 << CS11);
         break;
 
     case 256:
-        _prescaling = 256;
+        Attiny88PWM::_prescaling = 256;
         TCCR1B |= (1 << CS12);
         break;
 
     case 1024:
-        _prescaling = 1024;
+        Attiny88PWM::_prescaling = 1024;
         TCCR1B |= (1 << CS10) | (1 << CS12);
-        break;
-
-    default:
         break;
     }
 }
 
-void setResolution_Attiny88PWM(byte resolution)
+// Установка верхнего предела таймера исходя из заданого разрешения ШИМ
+// Частота ШИМ будет зависеть от частоты процессора, режима и предделителя
+void Attiny88PWM::setResolution(byte resolution)
 {
-    _resolution = constrain(resolution, 1, 16);
+    Attiny88PWM::_resolution = constrain(resolution, 1, 16);
 
-    // установка верхнего предела счетчика таймера исходя из выбраного разрешения ШИМ
-    ICR1 = (1ul << _resolution) - 1;
+    ICR1 = (1ul << Attiny88PWM::_resolution) - 1;
 }
 
-void setFrequency_Attiny88PWM(float frequency)
+// TODO: Установка верхнего предела и предделителя таймера исходя из заданной частоты
+//
+void Attiny88PWM::setFrequency(float frequency)
 {
-    _frequency = constrain(frequency, 0, 8000000);
+    // _frequency = constrain(frequency, 0, 8000000);
 
-    uint32_t top;
+    // uint32_t top;
 
-    // ищем верхний предел для счетчика таймера
-    // перебираем варианты предделителей чтобы выбрать наименьший
-    for (byte i = 0; i < 5; i++)
+    // // ищем верхний предел для счетчика таймера
+    // // перебираем варианты предделителей чтобы выбрать наименьший
+    // for (byte i = 0; i < 5; i++)
+    // {
+    //     top = F_CPU / _prescalingList[i] / (_frequency * _modeDivider);
+    //     if (top <= 65535)
+    //     {
+    //         ICR1 = top;
+    //         break;
+    //     }
+    // }
+
+    // // определяем разрешение верхнего предела для счетчика таймера
+    // for (_resolution = 0; top > 0; top >>= 1)
+    // {
+    //     _resolution++;
+    // }
+}
+
+// Установка заполнения ШИМ значением от 0 до верхнего предела таймера (ICR1)
+void Attiny88PWM::setDutyRaw(byte pin, uint16_t duty)
+{
+    if (duty)
     {
-        top = F_CPU / _prescalingList[i] / (_frequency * _modeDivider);
-        if (top <= 65535)
+        pinAttach(pin);
+
+        switch (pin)
         {
-            ICR1 = top;
+        case 9:
+            OCR1A = duty;
+            break;
+
+        case 10:
+            OCR1B = duty;
             break;
         }
     }
-
-    // определяем разрешение верхнего предела для счетчика таймера
-    for (_resolution = 0; top > 0; top >>= 1)
+    else
     {
-        _resolution++;
+        pinDetach(pin);
     }
 }
 
-void setDutyRaw_Attiny88PWM(byte pin, uint16_t duty)
+// Установка заполнения ШИМ значением от 0 до двойки в степени выбраного разрешения
+void Attiny88PWM::setDuty(byte pin, uint16_t duty)
 {
-    switch (pin)
-    {
-    case 9:
-        if (duty)
-        {
-            // включаем пин
-            DDRB |= (1 << PB1);
-
-            // задаем скважность(заполнение)
-            OCR1A = duty;
-        }
-        else
-        {
-            // отключаем пин если скважность(заполнение) = 0
-            DDRB &= ~(1 << PB1);
-        }
-        break;
-
-    case 10:
-        if (duty)
-        {
-            // включаем пин
-            DDRB |= (1 << PB2);
-
-            // задаем скважность(заполнение)
-            OCR1B = duty;
-        }
-        else
-        {
-            // отключаем пин если скважность(заполнение) = 0
-            DDRB &= ~(1 << PB2);
-        }
-        break;
-
-    default:
-        break;
-    }
+    setDutyRaw(pin, map(constrain(duty, 0, (1ul << Attiny88PWM::_resolution) - 1), 0, (1ul << Attiny88PWM::_resolution) - 1, 0, ICR1));
 }
 
-void setDuty_Attiny88PWM(byte pin, uint16_t duty)
+// Установка заполнения ШИМ значением от 0 до 100
+void Attiny88PWM::setDutyPercent(byte pin, float duty)
 {
-    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, (1ul << _resolution) - 1), 0, (1ul << _resolution) - 1, 0, ICR1));
+    setDutyRaw(pin, map(constrain(duty, 0, 100), 0, 100, 0, ICR1));
 }
 
-void setDutyPercent_Attiny88PWM(byte pin, float duty)
+// Установка заполнения ШИМ значением от 0 до 255 (8 бит)
+void Attiny88PWM::setDuty8bit(byte pin, uint16_t duty)
 {
-    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, 100), 0, 100, 0, ICR1));
+    setDutyRaw(pin, map(constrain(duty, 0, 255), 0, 255, 0, ICR1));
 }
 
-void setDuty8bit_Attiny88PWM(byte pin, uint16_t duty)
+// Установка заполнения ШИМ значением от 0 до 1023 (10 бит)
+void Attiny88PWM::setDuty10bit(byte pin, uint16_t duty)
 {
-    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, 255), 0, 255, 0, ICR1));
+    setDutyRaw(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
 }
 
-void setDuty10bit_Attiny88PWM(byte pin, uint16_t duty)
+// Инициализировать с настройками по умолчанию
+void Attiny88PWM::initDefault()
 {
-    setDutyRaw_Attiny88PWM(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
+    Attiny88PWM::resetTimer();
+    Attiny88PWM::setMode(false);
+    Attiny88PWM::setPrescaling(1);
+    Attiny88PWM::setResolution(8);
 }
