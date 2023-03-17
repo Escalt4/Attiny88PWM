@@ -13,6 +13,9 @@
 void setup() {
   // Запустить таймер с настроками по умолчнию
   init_Attiny88PWM();
+  
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
 }
 
 void loop() {
@@ -44,6 +47,12 @@ void setup() {
 
   // Установить разрешение 16 бит (0-65535)
   setResolution_Attiny88PWM(16);
+ 
+  // Переключение порта на выход 
+  Attiny88PWM::setPinModeOutput(9);
+  // Либо стандартной arduino-функцией
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
 }
 
 
