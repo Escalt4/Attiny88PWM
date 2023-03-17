@@ -1,47 +1,49 @@
 #pragma once
 
+#define CORRECT_PWM 1
+#define FAST_PWM 0
+
 namespace Attiny88PWM
 {
-    void Attiny88PWM::resetTimer();
-    void Attiny88PWM::restoreTimer();
-    void Attiny88PWM::pinDetach(uint8_t pin);
-    void Attiny88PWM::pinAttach(uint8_t pin);
-    void Attiny88PWM::setPinModeOutput(uint8_t pin);
-    void Attiny88PWM::setMode(bool correct);
-    void Attiny88PWM::setPrescaling(int prescaling);
-    void Attiny88PWM::setResolution(byte resolution);
-    void Attiny88PWM::setFrequency(float frequency);
-    void Attiny88PWM::setDutyRaw(byte pin, uint16_t duty);
-    void Attiny88PWM::setDuty(byte pin, uint16_t duty);
-    void Attiny88PWM::setDutyPercent(byte pin, float duty);
-    void Attiny88PWM::setDuty8bit(byte pin, uint16_t duty);
-    void Attiny88PWM::setDuty10bit(byte pin, uint16_t duty);
-    void Attiny88PWM::initDefault();
+    void resetTimer();
+    void restoreTimer();
+    void pinDetach(uint8_t pin);
+    void pinAttach(uint8_t pin);
+    void setPinModeOutput(uint8_t pin);
+    void setMode(bool correct);
+    void setPrescaling(int prescaling);
+    void setResolution(byte resolution);
+    void setFrequency(float frequency);
+    void setDutyRaw(byte pin, uint16_t duty);
+    void setDuty(byte pin, uint16_t duty);
+    void setDutyPercent(byte pin, float duty);
+    void setDuty8bit(byte pin, uint16_t duty);
+    void setDuty10bit(byte pin, uint16_t duty);
 
     byte _modeDivider = 1;                         // дополнительный делитель итоговой частоты ШИМ
     int _prescaling = 1;                           // предделитель частоты таймера
     int _prescalingList[] = {1, 8, 64, 256, 1024}; // список предделителей
     byte _resolution = 8;                          // выбраное разрешение
     float _frequency = 0.0;                        // выбраная частота
-    byte tccr1a;                                   // прошлые настройки таймера
-    byte tccr1b;                                   // прошлые настройки таймера
+    byte _tccr1a;                                  // прошлые настройки таймера
+    byte _tccr1b;                                  // прошлые настройки таймера
 
 };
 
 // Бекап и сброс настроек таймера
 void Attiny88PWM::resetTimer()
 {
-    Attiny88PWM::tccr1a = TCCR1A;
+    Attiny88PWM::_tccr1a = TCCR1A;
     TCCR1A = 0;
-    Attiny88PWM::tccr1b = TCCR1B;
+    Attiny88PWM::_tccr1b = TCCR1B;
     TCCR1B = 0;
 }
 
 // Восстановление настроек таймера
 void Attiny88PWM::restoreTimer()
 {
-    TCCR1A = tccr1a;
-    TCCR1B = tccr1b;
+    TCCR1A = _tccr1a;
+    TCCR1B = _tccr1b;
 }
 
 // Отключение пина от таймера
@@ -228,13 +230,4 @@ void Attiny88PWM::setDuty8bit(byte pin, uint16_t duty)
 void Attiny88PWM::setDuty10bit(byte pin, uint16_t duty)
 {
     setDutyRaw(pin, map(constrain(duty, 0, 1023), 0, 1023, 0, ICR1));
-}
-
-// Инициализировать с настройками по умолчанию
-void Attiny88PWM::initDefault()
-{
-    Attiny88PWM::resetTimer();
-    Attiny88PWM::setMode(false);
-    Attiny88PWM::setPrescaling(1);
-    Attiny88PWM::setResolution(8);
 }
