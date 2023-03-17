@@ -51,7 +51,6 @@ void setup() {
   // Переключение порта на выход 
   Attiny88PWM::setPinModeOutput(9);
   // Либо стандартной arduino-функцией
-  pinMode(9, OUTPUT);
   pinMode(10, OUTPUT);
 }
 
