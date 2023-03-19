@@ -58,61 +58,62 @@ void loop() {
 ## Описание функций
 ```cpp
 
-resetTimer();
-restoreTimer();
-pinDetach(uint8_t pin);
-pinAttach(uint8_t pin);
-setPinModeOutput(uint8_t pin);
-setMode(bool correct);
-setPrescaling(int prescaling);
-setResolution(byte resolution);
-setFrequency(float frequency);
-setDutyRaw(byte pin, uint16_t duty);
-setDuty(byte pin, uint16_t duty);
-setDutyPercent(byte pin, float duty);
-setDuty10bit(byte pin, uint16_t duty);
+void resetTimer();
+// Делает бекап и сбрасывает настройки таймера
 
-setMode_Attiny88PWM(bool correct);
+void restoreTimer();
+// Востанавливает настройки таймера
+
+void pinDetach(uint8_t pin);
+// Отключение пина от таймера
+
+void pinAttach(uint8_t pin);
+// Подключение пина к таймеру
+
+void setPinModeOutput(uint8_t pin);
+// Установка пина как выход, можно использовать вместо стандартной arduino-функцией
+
+void setMode(bool correct);
 // Задать режим генерации шим
-// mode: 0 (FAST_PWM) или 1 (CORRECT_PWM), по умолчанию 0 (FAST_PWM)
+// 0 (FAST_PWM) или 1 (CORRECT_PWM)
 
-setPrescaling_Attiny88PWM(int prescaling);
+void setPrescaling(int prescaling);
 // Задать предделитель частоты таймера, по умолчанию 1
 // prescaling: 1, 8, 64, 256 или 1024
 
-setResolution_Attiny88PWM(byte resolution);
-// Задать разрядность ШИМ, по умолчанию задана разрядность 8 бит 
+void setResolution(byte resolution);
+// Задать разрядность ШИМ
 // Частота ШИМ будет зависеть от режима, предделителя, частоты процессора
 // resolution: от 1 до 16
 
-setFrequency_Attiny88PWM(float frequency);
+void setFrequency(float frequency);
 // Задать конкретную частоту шим 
 // На практике частота будет немного отличатся от заданой 
 // frequency: от 0.0 до частота_процессора разделить на 2 (4 для CORRECT_PWM)
 
-setDutyRaw_Attiny88PWM(byte pin, uint16_t duty);
+void setDutyRaw(byte pin, uint16_t duty);
 // Задать скважность ШИМ 
 // pin: 9 или 10
-// duty: значение от 0 до верхнего предела счетчика таймера
+// duty: значение от 0 до верхнего предела счетчика таймера (ICR1)
 
-setDuty_Attiny88PWM(byte pin, uint16_t duty);
-// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw_Attiny88PWM
+void setDuty(byte pin, uint16_t duty);
+// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw
 // pin: 9 или 10
-// duty: значение из диапазона выбраной разрядности ШИМ или разрядности для выбраной частоты ШИМ
+// duty: от 0 до двух в степени выбраного разрешения 
 
-setDutyPercent_Attiny88PWM(byte pin, float duty);
-// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw_Attiny88PWM
+void setDutyPercent(byte pin, float duty);
+// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw
 // pin: 9 или 10
 // duty: заполнение ШИМ в процентах от 0.0 до 100.0
    
-setDuty8bit_Attiny88PWM(byte pin, uint16_t duty);
-// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw_Attiny88PWM
+void setDuty8bit(byte pin, uint16_t duty);
+// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw
 // Произойдет приведение к реальному доступному диапазону
 // pin: 9 или 10
 // duty: заполнение ШИМ, значения из диапазона 0-255 (8 бит)
-    
-setDuty10bit_Attiny88PWM(byte pin, uint16_t duty);
-// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw_Attiny88PWM
+
+void setDuty10bit(byte pin, uint16_t duty);
+// Задать скважность ШИМ, делает приведение значения и вызывает setDutyRaw
 // Произойдет приведение к реальному доступному диапазону
 // pin: 9 или 10
 // duty: заполнение ШИМ, значения из диапазона 0-1023 (10 бит)
