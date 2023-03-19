@@ -1,6 +1,6 @@
 #pragma once
 
-#define CORRECT_PWM 1
+#define CORRECT_PWM 1 
 #define FAST_PWM 0
 
 namespace Attiny88PWM
