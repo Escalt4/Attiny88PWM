@@ -40,14 +40,14 @@ void setup() {
 
 void loop() {
   // Установить заполнение 70.3% на 9 выводе
-  setDutyPercent_Attiny88PWM(9, 70.3);
+  Attiny88PWM::setDutyPercent(9, 70.3);
 
   // Установить заполнение 200 из 255 на 9 выводе
   // Аналогичен стандартной arduino-функцим analogWrite(pin, value)
-  setDuty8bit_Attiny88PWM(9, 200);
+  Attiny88PWM::setDuty8bit(9, 200);
 
   // Установить заполнение равное значению analogRead(pin) которая возвращает от 0 до 1023
-  setDuty10bit_Attiny88PWM(9, analogRead(7));
+  Attiny88PWM::setDuty10bit(9, analogRead(7));
   
   // Сменить разрешение и установить заполнение 55100 из 65535 на 9 выводе  
   Attiny88PWM::setResolution(16);
