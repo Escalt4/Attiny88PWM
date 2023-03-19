@@ -19,39 +19,21 @@
 #include <Attiny88PWM.h>
 
 // В setup сделаем cброс и установку своих настроек таймера
-void setup() {
-  // Сброс текущих настроек таймера
-  Attiny88PWM::resetTimer();
-  
-  // Установка режима, FAST_PWM (0) или CORRECT_PWM (1)
-  Attiny88PWM::setMode(FAST_PWM);
-
-  // Установка предделителя
-  Attiny88PWM::setPrescaling(1);
-
-  // Установка разрешения
-  Attiny88PWM::setResolution(9);
-
-  // Переключение порта на выход встроеной функцией
-  Attiny88PWM::setPinModeOutput(9);
-  // Либо стандартной arduino-функцией
-  // pinMode(9, OUTPUT);
+void setup() { 
+  Attiny88PWM::resetTimer();  // Сброс текущих настроек таймера
+  Attiny88PWM::setMode(FAST_PWM);  // Установка режима, FAST_PWM (0) или CORRECT_PWM (1)
+  Attiny88PWM::setPrescaling(1);  // Установка предделителя
+  Attiny88PWM::setResolution(9);  // Установка разрешения
+  Attiny88PWM::setPinModeOutput(9);  // Переключение порта на выход встроеной функцией
+  // pinMode(9, OUTPUT);  // Либо стандартной arduino-функцией
 }
 
 void loop() {
-  // Установить заполнение 70.3% на 9 выводе
-  Attiny88PWM::setDutyPercent(9, 70.3);
-
-  // Установить заполнение 200 из 255 на 9 выводе
-  // Аналогичен стандартной arduino-функцим analogWrite(pin, value)
-  Attiny88PWM::setDuty8bit(9, 200);
-
-  // Установить заполнение равное значению analogRead(pin) которая возвращает от 0 до 1023
-  Attiny88PWM::setDuty10bit(9, analogRead(7));
-  
-  // Сменить разрешение и установить заполнение 55100 из 65535 на 9 выводе  
-  Attiny88PWM::setResolution(16);
-  Attiny88PWM::setDuty(9, 55100)
+  Attiny88PWM::setDutyPercent(9, 70.3);  // Установить заполнение 70.3% на 9 выводе
+  Attiny88PWM::setDuty8bit(9, 200);  // Установить заполнение 200 из 255 на 9 выводе, как в analogWrite(pin, value)
+  Attiny88PWM::setDuty10bit(9, analogRead(7));  // Установить заполнение равное значению analogRead(pin) которая возвращает от 0 до 1023
+  Attiny88PWM::setResolution(16);  // Сменить разрешение на 16 бит
+  Attiny88PWM::setDuty(9, 55100);  // Установить заполнение 55100 из 65535 на 9 выводе  
 }
 ```
 
