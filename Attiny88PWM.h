@@ -27,7 +27,6 @@ namespace Attiny88PWM
     float _frequency = 0.0;                        // выбраная частота
     byte _tccr1a;                                  // прошлые настройки таймера
     byte _tccr1b;                                  // прошлые настройки таймера
-
 };
 
 // Бекап и сброс настроек таймера
@@ -157,8 +156,8 @@ void Attiny88PWM::setResolution(byte resolution)
     ICR1 = (1ul << Attiny88PWM::_resolution) - 1;
 }
 
-// TODO: Установка верхнего предела и предделителя таймера исходя из заданной частоты
-//
+// Установка верхнего предела и предделителя таймера исходя из заданной частоты
+// Не работает, TODO: исправить и дописать логику выбора предделителя и ICR1
 void Attiny88PWM::setFrequency(float frequency)
 {
     // _frequency = constrain(frequency, 0, 8000000);
@@ -208,7 +207,7 @@ void Attiny88PWM::setDutyRaw(byte pin, uint16_t duty)
     }
 }
 
-// Установка заполнения ШИМ значением от 0 до двойки в степени выбраного разрешения
+// Установка заполнения ШИМ значением от 0 до двух в степени выбраного разрешения
 void Attiny88PWM::setDuty(byte pin, uint16_t duty)
 {
     setDutyRaw(pin, map(constrain(duty, 0, (1ul << Attiny88PWM::_resolution) - 1), 0, (1ul << Attiny88PWM::_resolution) - 1, 0, ICR1));
